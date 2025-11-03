@@ -1,53 +1,88 @@
+
 package com.at.t.eCommerce.service_impl;
 
+import java.util.Set;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.at.t.eCommerce.dto.User_Register_DTO;
-import com.at.t.eCommerce.exception.RegistrationFailedException;
+import com.at.t.eCommerce.auth.JWTUtil;
+import com.at.t.eCommerce.auth.session.SessionService;
+import com.at.t.eCommerce.dto.request.Register_Request_DTO;
+import com.at.t.eCommerce.dto.response.Register_Response_DTO;
+import com.at.t.eCommerce.enums.Role;
 import com.at.t.eCommerce.exception.UserAlreadyExistsException;
-import com.at.t.eCommerce.mapper.UserRegisterMapper;
-import com.at.t.eCommerce.model.UserModel;
-import com.at.t.eCommerce.repo.UserModelRepo;
+import com.at.t.eCommerce.factory.CoreUserFactory;
+import com.at.t.eCommerce.model.CoreUser;
+import com.at.t.eCommerce.repo.CoreUserRepo;
 import com.at.t.eCommerce.service.RegisterUser;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class Register_User_Impl implements RegisterUser {
 
-    private final UserModelRepo userRepo;
-    private final PasswordEncoder passwordEncoder;
+	private static final Logger LOGGER = LoggerFactory.getLogger(Register_User_Impl.class);
 
-    public Register_User_Impl(UserModelRepo userRepo, PasswordEncoder passwordEncoder) {
-        this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-    }
+	private final CoreUserRepo coreUserRepo;
+	private final PasswordEncoder passwordEncoder;
+	private final JWTUtil jwtUtil;
+	private final SessionService sessionService;
 
-    @Override
-    public User_Register_DTO registerUser(User_Register_DTO user) {
-        // Check if the user already exists by email or phone
-        if (userRepo.existsByEmail(user.getEmail())) {
-            throw new UserAlreadyExistsException("User with email " + user.getEmail() + " already exists.");
-        } else if (userRepo.existsByPhone(user.getPhone())) {
-            throw new UserAlreadyExistsException("User with phone " + user.getPhone() + " already exists.");
-        }
+	@Override
+	public Register_Response_DTO registerUser(Register_Request_DTO request) {
 
-        try {
-            // Map the DTO to the UserModel entity
-            UserModel mapToUserRegister = UserRegisterMapper.INSTANCE.toEntity(user);
-            // Encode the password before saving
-            mapToUserRegister.setPassword(passwordEncoder.encode(user.getPassword()));
-            // Save the user to the database
-            UserModel savedUser = userRepo.save(mapToUserRegister);
+		String email = request.getEmail();
+		String rawPassword = request.getPassword();
+		String phone = request.getPhone();
 
-            log.info("Successfully registered user: {}", user.getEmail());
-            // Map back to DTO and return
-            return UserRegisterMapper.INSTANCE.toDTO(savedUser);
-        } catch (Exception e) {
-            log.error("Registration failed for user {}: {}", user.getEmail(), e.getMessage(), e);
-            throw new RegistrationFailedException("Registration failed due to an internal error.");
-        }
-    }
+		if (email.isBlank() || rawPassword.isBlank()) {
+			throw new IllegalArgumentException("EMAIL AND PASSWORD IS INCORRECT");
+		}
+
+		if (coreUserRepo.existsByEmail(email)) {
+			throw new UserAlreadyExistsException("User already Exists uh ah");
+		}
+
+		String encodedPassword = passwordEncoder.encode(rawPassword);
+		Role role = resolveRoleOrDefault(request.getRole());
+
+		CoreUser user = switch (role) {
+		case SELLER -> CoreUserFactory.of(email, phone, encodedPassword, Set.of(Role.SELLER));
+		case BUYER -> CoreUserFactory.of(email, phone, encodedPassword, Set.of(Role.BUYER));
+		default -> throw new IllegalArgumentException("Unexcepted Value : " + role);
+		};
+        
+
+		String jti = UUID.randomUUID().toString();
+		String accessToken = jwtUtil.generateAccessToken(request.getEmail(), jti);
+		String refreshToken = jwtUtil.generateRefreshToken(request.getEmail(), jti);
+		
+		sessionService.createSession(jti, email, refreshToken, null);
+		
+		CoreUser savedUser = coreUserRepo.save(user);
+
+		return new Register_Response_DTO(savedUser.getId(), savedUser.getEmail(), accessToken, refreshToken,
+				role.name());
+	}
+
+	public Role resolveRoleOrDefault(String role) {
+
+		if (role == null || role.isBlank())
+			return Role.BUYER;
+
+		try {
+			return Role.valueOf(role.trim().toUpperCase());
+		} catch (IllegalArgumentException e) {
+
+			return Role.BUYER;
+		}
+	}
+
 }

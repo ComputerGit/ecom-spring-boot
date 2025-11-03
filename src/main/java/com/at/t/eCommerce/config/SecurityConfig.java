@@ -18,49 +18,48 @@ import com.at.t.eCommerce.auth.JwtAuthenticationFilter;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+	
 
-    private final UserDetailsService userDetailsService;
-    private final JwtAuthenticationFilter jwtFilter;
+	private final UserDetailsService userDetailsService;
+	private final JwtAuthenticationFilter jwtFilter;
 
-    public SecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationFilter jwtFilter) {
-        this.userDetailsService = userDetailsService;
-        this.jwtFilter = jwtFilter;
-    }
+	public SecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationFilter jwtFilter) {
+		this.userDetailsService = userDetailsService;
+		this.jwtFilter = jwtFilter;
+	}
 
-    // Configure authentication manager
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-        return authenticationManagerBuilder.build();
-    }
+	// Configure authentication manager
+	@Bean
+	public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+		AuthenticationManagerBuilder authenticationManagerBuilder = http
+				.getSharedObject(AuthenticationManagerBuilder.class);
+		authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+		return authenticationManagerBuilder.build();
+	}
 
-    // Password encoder for secure password hashing
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	// Password encoder for secure password hashing
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    // Define the security filter chain for HTTP requests
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // Explicitly disabling CSRF
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/authenticate", "/register", "/public/**", "/test-email","/api/account/register",
-                        "/api/account/delete/by-username", "/api/account/get-all", "/api/account/update-dob" ,"/api/account/authenticate",
-                        "/api/account/user/{username}/role" , "/api/seller/product" ,"/api/seller/{productID}")
-                .permitAll()  // Allow access to specified endpoints
-                .requestMatchers("api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/seller/**").hasRole("SELLER")
-                .anyRequest().authenticated()
-            )
-             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // Stateless session for JWT
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+	// Define the security filter chain for HTTP requests
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable()) // Explicitly disabling CSRF
+				.authorizeHttpRequests(authz -> authz
+						.requestMatchers("/authenticate", "/register", "/public/**", "/test-email",
+								"/api/account/register","/api/account/login", "/api/account/delete/by-username", "/api/account/get-all",
+								"/api/account/update-dob", "/api/account/authenticate",
+								"/api/account/user/{username}/role", "/api/account/register", "/api/account/verify",
+								"/api/account/resend-verification", "/api/account/authenticate", "/api/seller/product",
+								"/api/seller/{productID}", "/actuator/** " , "/api/account/**")
+						.permitAll() // Allow access to specified endpoints
+						.requestMatchers("api/admin/**").hasRole("ADMIN").requestMatchers("/api/seller/**")
+						.hasRole("SELLER").anyRequest().authenticated())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) 
+				).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+		return http.build();
+	}
 }

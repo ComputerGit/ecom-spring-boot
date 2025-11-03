@@ -1,39 +1,46 @@
 package com.at.t.eCommerce.service_impl;
 
-import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Service;
 
-import com.at.t.eCommerce.dto.User_Login_DTO;
-import com.at.t.eCommerce.mapper.User_Login_Mapper;
-import com.at.t.eCommerce.model.UserModel;
-import com.at.t.eCommerce.repo.UserModelRepo;
+import com.at.t.eCommerce.auth.AuthenticationService;
+import com.at.t.eCommerce.auth.AuthenticationService.AuthTokens;
+import com.at.t.eCommerce.dto.request.AuthenticationRequestDto;
+import com.at.t.eCommerce.dto.response.AuthenticationResponse;
 import com.at.t.eCommerce.service.LoginUser;
 
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
+@AllArgsConstructor
+@Transactional
 public class Login_User_Impl implements LoginUser {
 
-    private final UserModelRepo userModelRepo;
-    private final PasswordEncoder passwordEncoder;
+	@Autowired
+	public final AuthenticationService authenticationService;
 
-    public Login_User_Impl(UserModelRepo userModelRepo, PasswordEncoder passwordEncoder) {
-        this.userModelRepo = userModelRepo;
-        this.passwordEncoder = passwordEncoder;
-    }
+	@Override
+	public ResponseEntity<AuthenticationResponse> requestDto(AuthenticationRequestDto requestDto) {
 
-    @Override
-    public User_Login_DTO user_Login_DTO(User_Login_DTO user_Login_DTO) {
+		try {
 
-        Optional<UserModel> userOptional = userModelRepo.findByUserName(user_Login_DTO.getUsername());
+			AuthTokens tokens = authenticationService.createAuthenticationToken(requestDto);
 
-        if (userOptional.isPresent()) {
-            UserModel user = userOptional.get();
-            if (passwordEncoder.matches(user_Login_DTO.getPassword(), user.getPassword())) {
-                return User_Login_Mapper.mapToUserLoginDTO(user);
-            }
-        }
+			AuthenticationResponse response = new AuthenticationResponse(tokens.accessToken() , tokens.refreshToken());
 
-        return null; // Return null if the user is not found or password does not match
-    }
+			return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
+	}
+
 }

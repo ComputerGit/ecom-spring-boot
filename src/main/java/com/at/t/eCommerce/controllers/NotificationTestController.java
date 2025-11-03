@@ -15,18 +15,19 @@ public class NotificationTestController {
 
     @GetMapping("/test-email")
     public String testSendEmail() {
-        UserModel recipient = new UserModel();
-        recipient.setId(2L); // optional
-        recipient.setEmail("rangerbeats01@gmail.com");
-
-        NotificationModel notification = new NotificationModel();
-        notification.setUser(recipient);
-        notification.setMessage("This is a test email from SES");
-        notification.setNotificationType(NotificationType.EMAIL);
-        notification.setNotificationStatus(NotificationStatus.UNREAD);
-
-        notificationDispatcher.dispatch(notification);
-
-        return "✅ Email sent to ranger@gmail.com";
+//        UserModel recipient = new UserModel();
+//        recipient.setId(2L); // optional
+//        recipient.setEmail("rangerbeats01@gmail.com");
+//
+//        NotificationModel notification = new NotificationModel();
+//        notification.setUser(recipient);
+//        notification.setMessage("This is a test email from SES");
+//        notification.setNotificationType(NotificationType.EMAIL);
+//        notification.setNotificationStatus(NotificationStatus.UNREAD);
+//
+//        notificationDispatcher.dispatch(notification);
+//
+//        return "✅ Email sent to ranger@gmail.com";
+    	return null;
     }
 }

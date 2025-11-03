@@ -32,10 +32,10 @@ public class OrderModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id" , nullable = false)
     @NotNull
-    private UserModel user;
+    private CoreUser user;
 
     @NotNull
     @Enumerated(EnumType.STRING)

@@ -1,9 +1,12 @@
 package com.at.t.eCommerce.service;
 
-import com.at.t.eCommerce.dto.User_Login_DTO;
+import org.springframework.http.ResponseEntity;
+
+import com.at.t.eCommerce.dto.request.AuthenticationRequestDto;
+import com.at.t.eCommerce.dto.response.AuthenticationResponse;
 
 public interface LoginUser  {
-	
-	public User_Login_DTO user_Login_DTO(User_Login_DTO user_Login_DTO);
+		
+	public ResponseEntity<AuthenticationResponse> requestDto(AuthenticationRequestDto requestDto);
 
 }

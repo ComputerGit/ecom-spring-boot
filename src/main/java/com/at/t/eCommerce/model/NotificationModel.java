@@ -40,7 +40,7 @@ public class NotificationModel {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	@NotNull
-	private UserModel user;
+	private CoreUser user;
 
 	@NotBlank
 	@Column(nullable = false)
