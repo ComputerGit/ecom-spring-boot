@@ -37,10 +37,10 @@ public class AuditModel {
 	private Long id;
 	
 	
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id" ,nullable = false)
 	@NotNull
-	private UserModel user;
+	private CoreUser user;
 	
     @NotBlank
     @Column(nullable = false)

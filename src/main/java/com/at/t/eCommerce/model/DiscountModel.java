@@ -3,8 +3,6 @@ package com.at.t.eCommerce.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.at.t.eCommerce.config.DiscountConfig;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
@@ -64,10 +62,10 @@ public class DiscountModel {
     )
     private List<ProductModel> applicableProducts;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", nullable = false)
     @NotNull
-    private UserModel createdBy;
+    private CoreUser createdBy;
 
     @PrePersist
     protected void onCreate() {
@@ -84,11 +82,11 @@ public class DiscountModel {
     @Column(nullable = false)
     private String discountType;
 
-    public void setDiscountType(String discountType, DiscountConfig discountConfig) {
-        if(discountConfig.getTypes().contains(discountType)) {
-            this.discountType = discountType;
-        } else {
-            throw new IllegalArgumentException("Invalid Discount Type: " + discountType);
-        }
-    }
+//    public void setDiscountType(String discountType, DiscountConfig discountConfig) {
+//        if(discountConfig.getTypes().contains(discountType)) {
+//            this.discountType = discountType;
+//        } else {
+//            throw new IllegalArgumentException("Invalid Discount Type: " + discountType);
+//        }
+//    }
 }
